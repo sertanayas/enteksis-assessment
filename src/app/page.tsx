@@ -20,7 +20,7 @@ export default function Home() {
           <a className="button" href="#request">Find your next automation <span aria-hidden="true">↗</span></a>
           <p className="hero-note">Built around your business. Designed for your team.</p>
         </div>
-        <div className="workflow" aria-label="Example workflow">
+        <div className="workflow" role="group" aria-label="Example automation workflow">
           <div className="workflow-heading"><span>YOUR WORKFLOW, CONNECTED</span><span className="live-label">● Example</span></div>
           <ol className="flow-list">
             <li className="flow-step"><span className="step-icon">01</span><div><strong>A new enquiry arrives</strong><p>From your website to your workspace</p></div><span className="check" aria-hidden="true">✓</span></li>
@@ -33,7 +33,7 @@ export default function Home() {
       <section id="services" className="services section" aria-labelledby="services-title"><div className="container">
         <p className="eyebrow">WHAT WE CAN TAKE OFF YOUR PLATE</p>
         <div className="section-heading"><h2 id="services-title">Make everyday work<br />work better.</h2><p>Practical automation for small businesses, growing teams, and the people wearing more than one hat.</p></div>
-        <div className="service-grid">{serviceOptions.map((service, index) => <article className="service-card" key={service}><span className="service-number">0{index + 1} /</span><h3>{service}</h3><p>{descriptions[index]}</p><a href="#request" aria-label={`Discuss ${service}`}>Explore the possibilities <span aria-hidden="true">↗</span></a></article>)}</div>
+        <div className="service-grid">{serviceOptions.map((service, index) => <article className="service-card" key={service}><span className="service-number">0{index + 1} /</span><h3>{service}</h3><p>{descriptions[index]}</p><a href="#request" aria-label={`Explore the possibilities for ${service}`}>Explore the possibilities <span aria-hidden="true">↗</span></a></article>)}</div>
       </div></section>
       <section id="how-it-works" className="section container" aria-labelledby="process-title">
         <p className="eyebrow">A SIMPLE WAY FORWARD</p><h2 id="process-title">From repetitive to effortless.</h2>

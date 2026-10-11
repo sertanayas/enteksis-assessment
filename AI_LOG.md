@@ -86,3 +86,92 @@ Codex also ran lint and the production build successfully.
 AI was used to accelerate implementation and debugging, but the final behavior was verified through manual testing, database inspection, linting, and production build checks.
 
 I did not treat generated code as correct until the complete request flow worked from the browser to persistent database storage.
+
+## 7. Independent Code Review with Claude Code
+
+After the initial implementation and automated testing, I used Claude Code as an independent reviewer rather than as an implementation agent.
+
+The review focused on:
+
+- Browser → API → validation → Supabase data flow
+- Server/client boundaries
+- Secret handling
+- Supabase RLS assumptions
+- Validation consistency
+- Error handling and false-success risks
+- Accessibility and keyboard behavior
+- Automated test coverage
+- README accuracy
+- Vercel deployment risks
+
+Claude identified no Critical issues, but highlighted several Important areas for improvement.
+
+I accepted the findings that directly improved the assessment requirements:
+
+- Added a reproducible `supabase/schema.sql`
+- Added API route behavior tests
+- Added exact validation boundary tests
+- Improved focus and accessibility behavior
+- Added JSON Content-Type enforcement
+- Added `.env.example`
+- Expanded Vercel deployment documentation
+- Documented the server-only Supabase secret architecture
+
+I intentionally did not implement unrelated refactors or extra product features that would increase complexity without improving the assessment requirements.
+
+## 8. Hardening Pass with Codex
+
+After reviewing Claude's findings, I used Codex to implement the selected improvements.
+
+The hardening pass added:
+
+- Database schema and RLS definition
+- Additional validation constraints
+- API success and failure tests
+- Extra-field stripping tests
+- Accessibility and focus improvements
+- Content-Type validation
+- Safer client-side error handling
+- Vercel deployment instructions
+- Node version requirements
+- Environment variable template
+
+Final automated verification:
+
+- `npm test`: 24/24 tests passed
+- `npm run lint`: passed
+- `npx tsc --noEmit`: passed
+- `npm run build`: passed
+
+## 9. Final Independent Review
+
+Claude Code performed a second review after the hardening changes.
+
+The second review confirmed:
+
+- No Critical findings
+- Correct browser → API → validation → Supabase flow
+- Server-only secret handling
+- No false-success path
+- Validation consistency
+- Correct RLS architecture
+- All 24 automated tests passing
+- Lint, TypeScript, and production build passing
+
+The only remaining deployment-level item was rate limiting on the public POST endpoint, which is planned as a Vercel Firewall configuration rather than an application-code change.
+
+## 10. Final Verification Approach
+
+The final application was verified through a combination of:
+
+- Automated tests
+- Manual validation testing
+- Successful Supabase persistence
+- Mobile responsive checks
+- Keyboard Tab navigation
+- Independent AI code review
+- Linting
+- TypeScript checking
+- Production build verification
+
+AI tools were used to accelerate implementation, debugging, and review, but technical decisions were validated through testing and observed system behavior before acceptance.

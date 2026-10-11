@@ -1,17 +1,26 @@
 "use client";
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { z } from "zod";
 import { requestSchema, serviceOptions, type FieldErrors, type RequestInput } from "@/lib/request-schema";
 export function RequestForm() {
   const formRef = useRef<HTMLFormElement>(null);
   const submitting = useRef(false);
+  const feedbackRef = useRef<HTMLParagraphElement>(null);
+  const focusTarget = useRef<"fields" | "feedback" | null>(null);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [pending, setPending] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "error" | "success"; message: string } | null>(null);
   function focusFirstError(fieldErrors: FieldErrors) {
     const first = (["name", "email", "service", "description"] as const).find((field) => fieldErrors[field]?.length);
-    if (first) (formRef.current?.elements.namedItem(first) as HTMLElement | null)?.focus();
+    const control = first ? formRef.current?.elements.namedItem(first) : null;
+    if (control instanceof HTMLElement && !control.matches(":disabled")) control.focus();
   }
+  useEffect(() => {
+    if (pending || !focusTarget.current) return;
+    if (focusTarget.current === "fields") focusFirstError(errors);
+    else feedbackRef.current?.focus();
+    focusTarget.current = null;
+  }, [pending, errors, feedback]);
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting.current) return;
@@ -20,7 +29,7 @@ export function RequestForm() {
     if (!result.success) {
       const fieldErrors = z.flattenError(result.error).fieldErrors;
       setErrors(fieldErrors);
-      focusFirstError(fieldErrors);
+      focusTarget.current = "fields";
       return;
     }
     setErrors({});
@@ -28,18 +37,37 @@ export function RequestForm() {
     setPending(true);
     try {
       const response = await fetch("/api/requests", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(result.data) });
-      const data = await response.json();
+      let data: { message?: string; errors?: FieldErrors };
+      try {
+        const parsed: unknown = await response.json();
+        if (!parsed || typeof parsed !== "object") throw new Error("Invalid response");
+        const message = "message" in parsed && typeof parsed.message === "string" ? parsed.message : undefined;
+        const fieldErrors: FieldErrors = {};
+        if ("errors" in parsed && parsed.errors && typeof parsed.errors === "object") {
+          for (const field of ["name", "email", "service", "description"] as const) {
+            const value = (parsed.errors as Record<string, unknown>)[field];
+            if (Array.isArray(value) && value.every((item) => typeof item === "string")) fieldErrors[field] = value;
+          }
+        }
+        data = { message, errors: fieldErrors };
+      } catch {
+        setFeedback({ type: "error", message: "We couldn’t save your request. Please try again shortly." });
+        focusTarget.current = "feedback";
+        return;
+      }
       if (!response.ok) {
         const fieldErrors: FieldErrors = data.errors ?? {};
         setErrors(fieldErrors);
-        focusFirstError(fieldErrors);
-        setFeedback({ type: "error", message: data.message ?? "We couldn’t save your request. Please try again." });
+        focusTarget.current = Object.values(fieldErrors).some((messages) => messages?.length) ? "fields" : "feedback";
+        setFeedback({ type: "error", message: response.status >= 500 ? "We couldn’t save your request. Please try again shortly." : data.message ?? "We couldn’t save your request. Please try again." });
         return;
       }
       formRef.current?.reset();
-      setFeedback({ type: "success", message: data.message });
+      setFeedback({ type: "success", message: data.message ?? "Your request has been saved. Thanks for telling us about your project!" });
+      focusTarget.current = "feedback";
     } catch {
       setFeedback({ type: "error", message: "We couldn’t confirm your submission. Check your connection and try again." });
+      focusTarget.current = "feedback";
     } finally {
       submitting.current = false;
       setPending(false);
@@ -61,7 +89,8 @@ export function RequestForm() {
         <div className="form-field"><label htmlFor="description">Tell us about your workflow</label><textarea {...fieldProps("description")} placeholder="What does your team do repeatedly, and which tools do you use?" required minLength={20} maxLength={5000} rows={5} /><p className="field-hint" id="description-hint">20–5,000 characters. Please don’t include passwords or sensitive data.</p>{errorFor("description")}</div>
         <button className="button submit-button" type="submit">{pending ? "Saving your request…" : "Send your request"}<span aria-hidden="true">{pending ? "…" : "↗"}</span></button>
       </fieldset>
-      <div aria-live="polite" aria-atomic="true">{pending && <p className="field-hint">Please wait while we save your request.</p>}{feedback && <p className={`feedback ${feedback.type}`} role={feedback.type === "error" ? "alert" : "status"}>{feedback.message}</p>}</div>
+      <div role="status" aria-atomic="true">{pending && <p className="field-hint">Please wait while we save your request.</p>}</div>
+      {feedback && <p ref={feedbackRef} tabIndex={-1} className={`feedback ${feedback.type}`}>{feedback.message}</p>}
     </form>
   );
 }
