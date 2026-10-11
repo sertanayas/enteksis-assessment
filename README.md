@@ -71,13 +71,15 @@ No authentication or public database policy is added. Vercel deployment instruct
 
 ## Vercel deployment instructions
 
-These are manual instructions; no deployment is performed by this project setup.
+The production application is deployed manually through Vercel using the connected GitHub repository.
 
 1. Prepare the target Supabase database using the schema above and run all verification commands locally.
 2. When ready, import your repository into Vercel, select the Next.js framework, and use the project root. Keep `npm run build` as the build command and choose Node.js 24.x (the project requires Node >=22.18).
 3. Add `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in the project's environment-variable settings. Never add a `NEXT_PUBLIC_` prefix or commit actual values.
 4. Set the variables for **Production** to the production Supabase project. Set **Preview** separately, preferably to a separate test Supabase project with the same schema, so preview submissions do not populate production data. Local `.env.local` is not a substitute for Vercel configuration.
 5. Deploy a Preview and run the smoke tests below, then deploy Production when ready. Redeploy after changing Vercel environment variables; changes apply to subsequent deployments. See [Vercel environment variables](https://vercel.com/docs/environment-variables) and [managing variables](https://vercel.com/docs/environment-variables/managing-environment-variables).
+6. Configure a Vercel Firewall rule to rate-limit `POST /api/requests` by IP. The production setup uses a fixed window of 10 requests per 60 seconds and returns HTTP 429 when the limit is exceeded.
+7. After deployment, verify the live form by submitting fictional test data and confirming that the record is persisted in Supabase.
 
 ### Post-deployment smoke tests
 

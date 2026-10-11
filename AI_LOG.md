@@ -175,3 +175,21 @@ The final application was verified through a combination of:
 - Production build verification
 
 AI tools were used to accelerate implementation, debugging, and review, but technical decisions were validated through testing and observed system behavior before acceptance.
+
+## 11. Production Deployment Verification
+
+The application was deployed to Vercel and verified in the production environment.
+
+Production verification included:
+
+- Loading the live responsive application
+- Submitting a valid fictional request
+- Confirming the success state in the browser
+- Confirming that the submitted record was persisted in Supabase
+- Verifying invalid form submissions
+- Configuring a Vercel Firewall rate limit for `POST /api/requests`
+- Verifying the rate limit by receiving HTTP 429 after the configured request threshold
+
+The complete production flow was verified as:
+
+Browser → Vercel API → server validation → Supabase persistence → success response
